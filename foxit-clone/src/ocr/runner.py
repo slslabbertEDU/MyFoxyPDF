@@ -1,37 +1,21 @@
 import os
-import pytesseract
-from PIL import Image
+import subprocess
 
 class OCRRunner:
-    def __init__(self, tesseract_cmd=None):
-        if tesseract_cmd:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
-        elif os.name == 'nt':
-            # Default path for Windows
-            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    def __init__(self, tesseract_cmd: str = "tesseract"):
+        self.tesseract_cmd = tesseract_cmd
 
-        self.tesseract_cmd = pytesseract.pytesseract.tesseract_cmd
-
-    def is_available(self):
+    def is_available(self) -> bool:
         try:
-            pytesseract.get_tesseract_version()
+            # Running with --version is a good way to check if it's installed and accessible
+            subprocess.run([self.tesseract_cmd, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
             return True
-        except Exception:
-            # If command is explicitly provided but invalid, or standard tesseract not found
-            # we also check if the path exists, but get_tesseract_version is safer.
+        except (FileNotFoundError, subprocess.CalledProcessError):
             return False
 
-    def run_ocr(self, image_path, output_base):
-        """
-        Runs OCR on the given image and saves it to output_base.
-        (e.g., if output_base is 'out', it might create 'out.txt' or 'out.pdf')
-        """
+    def run_ocr(self, image_path: str, output_base: str, lang: str = "eng"):
         if not self.is_available():
-            raise FileNotFoundError("Tesseract OCR is not available. Please install it.")
+            raise FileNotFoundError(f"Tesseract command '{self.tesseract_cmd}' not found or not executable.")
 
-        # Here we just return the extracted text as a simple implementation,
-        # but the test mostly checks if it raises FileNotFoundError.
-        text = pytesseract.image_to_string(Image.open(image_path))
-        with open(f"{output_base}.txt", "w", encoding="utf-8") as f:
-            f.write(text)
-        return text
+        # Run tesseract image_path output_base -l lang
+        subprocess.run([self.tesseract_cmd, image_path, output_base, "-l", lang], check=True)
