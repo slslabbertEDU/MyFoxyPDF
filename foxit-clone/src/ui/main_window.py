@@ -1,22 +1,25 @@
 import sys
 import os
 
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QFileDialog, QSplitter, QLabel, QHBoxLayout, QToolButton
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QFileDialog, QSplitter, QLabel, QHBoxLayout, QToolButton, QInputDialog, QMessageBox
 from PySide6.QtCore import Qt, Slot, QSize
 from PySide6.QtGui import QIcon, QAction
 from pyqtribbon import RibbonBar
 
-from .pdf_view import PDFView
-from render.engine import RenderEngine
-from render.async_renderer import AsyncRenderer
-from .sidebar import Sidebar
+from src.ui.pdf_view import PDFView
+from src.render.engine import RenderEngine
+from src.render.async_renderer import AsyncRenderer
+from src.ui.sidebar import Sidebar
+from src.ai.assistant import AIAssistant
+from src.edit.page_manager import PageManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MyFoxyPDF Editor Pro")
-        self.resize(1200, 800)
+        self.resize(1400, 900)
 
+        self.filepath = None
         self.engine = RenderEngine()
         self.renderer = AsyncRenderer(self.engine)
         self.renderer.render_completed.connect(self.on_render_completed)
@@ -54,9 +57,15 @@ class MainWindow(QMainWindow):
         # 3. Organize Tab
         self.organize_category = self.ribbon.addCategory("Organize")
         pages_panel = self.organize_category.addPanel("Pages")
-        pages_panel.addLargeButton("Insert")
-        pages_panel.addLargeButton("Delete")
-        pages_panel.addLargeButton("Rotate")
+
+        insert_page_btn = pages_panel.addLargeButton("Insert")
+        insert_page_btn.clicked.connect(self.action_insert_page)
+
+        delete_page_btn = pages_panel.addLargeButton("Delete")
+        delete_page_btn.clicked.connect(self.action_delete_page)
+
+        rotate_page_btn = pages_panel.addLargeButton("Rotate")
+        rotate_page_btn.clicked.connect(self.action_rotate_page)
 
         transform_panel = self.organize_category.addPanel("Transform")
         transform_panel.addMediumButton("Split")
@@ -82,6 +91,7 @@ class MainWindow(QMainWindow):
         self.main_layout = QVBoxLayout(self.central_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
+        # 3-Way Splitter
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
 
         self.sidebar = Sidebar()
@@ -89,9 +99,14 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(self.sidebar)
 
         self.pdf_view = PDFView()
+        self.pdf_view.zoom_requested.connect(self.on_zoom_requested)
         self.splitter.addWidget(self.pdf_view)
 
-        self.splitter.setSizes([200, 800])
+        # Right Panel: AI Assistant
+        self.ai_assistant = AIAssistant()
+        self.splitter.addWidget(self.ai_assistant)
+
+        self.splitter.setSizes([200, 900, 300])
 
         self.main_layout.addWidget(self.splitter)
         self.setCentralWidget(self.central_widget)
@@ -101,24 +116,62 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def open_file(self):
-        filepath, _ = QFileDialog.getOpenFileName(self, "Open PDF", "", "PDF Files (*.pdf)")
-        if filepath:
-            self.engine.load_document(filepath)
+        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open PDF", "", "PDF Files (*.pdf)")
+        if self.filepath:
+            self.engine.load_document(self.filepath)
             self.current_page = 0
             self.total_pages = self.engine.get_page_count()
-            self.sidebar.populate_thumbnails(self.total_pages)
+            self.sidebar.populate_thumbnails(self.filepath)
             self.renderer.request_render(self.current_page, zoom=2.0)
+
+    def _save_and_reload(self):
+        if not self.filepath or not self.engine.doc:
+            return
+
+        # Incremental save per requirements
+        self.engine.doc.saveIncr()
+        # Force refresh
+        self.total_pages = self.engine.get_page_count()
+        self.sidebar.populate_thumbnails(self.filepath)
+        self.renderer.request_render(self.current_page, zoom=self.pdf_view.zoom_factor)
+
+    @Slot()
+    def action_insert_page(self):
+        if not self.engine.doc: return
+        manager = PageManager(self.engine.doc)
+        manager.insert_empty_page(self.current_page + 1)
+        self._save_and_reload()
+
+    @Slot()
+    def action_delete_page(self):
+        if not self.engine.doc: return
+        manager = PageManager(self.engine.doc)
+        if manager.delete_page(self.current_page):
+            self.current_page = max(0, self.current_page - 1)
+            self._save_and_reload()
+
+    @Slot()
+    def action_rotate_page(self):
+        if not self.engine.doc: return
+        manager = PageManager(self.engine.doc)
+        manager.rotate_page(self.current_page, 90)
+        self._save_and_reload()
 
     @Slot(int)
     def on_page_requested(self, page_num):
         if 0 <= page_num < self.total_pages:
             self.current_page = page_num
-            self.renderer.request_render(self.current_page, zoom=2.0)
+            self.renderer.request_render(self.current_page, zoom=self.pdf_view.zoom_factor)
 
-    @Slot(int, object)
-    def on_render_completed(self, page_num, pixmap):
+    @Slot(float)
+    def on_zoom_requested(self, zoom_factor):
+        if self.filepath:
+            self.renderer.request_render(self.current_page, zoom=zoom_factor)
+
+    @Slot(int, float, object)
+    def on_render_completed(self, page_num, zoom, pixmap):
         if page_num == self.current_page:
-            self.pdf_view.set_pixmap(pixmap)
+            self.pdf_view.set_pixmap(pixmap, zoom)
 
     def closeEvent(self, event):
         self.renderer.stop()
