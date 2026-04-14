@@ -37,12 +37,12 @@ export interface BookmarkItem {
 export interface PDFTab {
   id: string;
   name: string;
-  document: File | null;
+  pdfFile: File | null;
 }
 
 export interface PDFState {
   // Document
-  document: File | null;
+  pdfFile: File | null;
   documentName: string;
   numPages: number;
   currentPage: number;
@@ -87,7 +87,7 @@ export interface PDFState {
   bookmarks: BookmarkItem[];
 
   // Actions
-  setDocument: (file: File | null) => void;
+  setPdfFile: (file: File | null) => void;
   setDocumentName: (name: string) => void;
   setNumPages: (num: number) => void;
   setCurrentPage: (page: number) => void;
@@ -134,12 +134,12 @@ export interface PDFState {
 const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
 
 const initialState = {
-  document: null,
+  pdfFile: null as File | null,
   documentName: '',
   numPages: 0,
   currentPage: 1,
   isLoading: false,
-  error: null,
+  error: null as string | null,
   zoom: 1,
   rotation: 0,
   viewMode: 'continuous' as ViewMode,
@@ -152,23 +152,23 @@ const initialState = {
   rightPanelWidth: 280,
   tabs: [] as PDFTab[],
   activeTabId: null as string | null,
-  annotations: [],
+  annotations: [] as Annotation[],
   activeAnnotationType: 'none' as AnnotationType,
   activeTool: 'select' as ActiveTool,
-  selectedAnnotation: null,
+  selectedAnnotation: null as string | null,
   isDrawing: false,
-  currentDrawPath: null,
+  currentDrawPath: null as DrawPath | null,
   searchQuery: '',
-  searchResults: [],
+  searchResults: [] as number[],
   currentSearchIndex: -1,
   isSearchVisible: false,
-  bookmarks: [],
+  bookmarks: [] as BookmarkItem[],
 };
 
 export const usePDFStore = create<PDFState>((set, get) => ({
   ...initialState,
 
-  setDocument: (file) => set({ document: file }),
+  setPdfFile: (file) => set({ pdfFile: file }),
   setDocumentName: (name) => set({ documentName: name }),
   setNumPages: (numPages) => set({ numPages }),
   setCurrentPage: (currentPage) => set({ currentPage }),

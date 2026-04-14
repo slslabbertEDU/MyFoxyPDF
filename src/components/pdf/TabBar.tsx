@@ -5,10 +5,10 @@ import { X, FileText, Plus } from 'lucide-react';
 import { usePDFStore } from './PDFStore';
 
 export default function TabBar() {
-  const { tabs, activeTabId, setActiveTab, removeTab, document } = usePDFStore();
+  const { tabs, activeTabId, setActiveTab, removeTab, pdfFile } = usePDFStore();
 
   const handleOpenFile = useCallback(() => {
-    const input = document.createElement('input');
+    const input = globalThis.document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf';
     input.onchange = (e) => {
@@ -68,7 +68,7 @@ export default function TabBar() {
       </div>
 
       {/* Current document name (when no tabs) */}
-      {!tabs.length && document && (
+      {!tabs.length && pdfFile && (
         <div className="flex items-center gap-1.5 px-3 h-full bg-[#1e1e1e] text-[#d4d4d4]">
           <FileText className="h-3.5 w-3.5 text-[#e8720c]" />
           <span className="text-xs truncate">

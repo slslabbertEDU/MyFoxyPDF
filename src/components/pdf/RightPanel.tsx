@@ -44,7 +44,7 @@ export default function RightPanel() {
   const {
     rightPanelOpen,
     rightPanelWidth,
-    document,
+    pdfFile,
     documentName,
     numPages,
     annotations,
@@ -205,7 +205,7 @@ export default function RightPanel() {
       {/* Properties tab */}
       {activeTab === 'properties' && (
         <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
-          {!document ? (
+          {!pdfFile ? (
             <div className="flex flex-col items-center justify-center h-32 text-[#666]">
               <FileText className="h-8 w-8 mb-2 opacity-40" />
               <p className="text-xs text-center">No document open</p>
@@ -230,7 +230,7 @@ export default function RightPanel() {
                     <div>
                       <p className="text-[10px] text-[#666]">File Size</p>
                       <p className="text-xs text-[#d4d4d4]">
-                        {document ? `${(document.size / 1024).toFixed(1)} KB` : 'N/A'}
+                        {pdfFile ? `${(pdfFile.size / 1024).toFixed(1)} KB` : 'N/A'}
                       </p>
                     </div>
                   </div>

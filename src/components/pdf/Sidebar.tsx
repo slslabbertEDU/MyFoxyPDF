@@ -16,7 +16,7 @@ import SearchPanel from './SearchPanel';
 import AnnotationPanel from './AnnotationPanel';
 
 export default function Sidebar() {
-  const { sidebarOpen, sidebarTab, setSidebarTab, sidebarWidth, setSidebarWidth, document } = usePDFStore();
+  const { sidebarOpen, sidebarTab, setSidebarTab, sidebarWidth, setSidebarWidth, pdfFile } = usePDFStore();
   const resizeRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -89,7 +89,7 @@ export default function Sidebar() {
 
         {/* Panel body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-          {!document ? (
+          {!pdfFile ? (
             <div className="flex flex-col items-center justify-center h-full text-[#666] px-4">
               <FileText className="h-12 w-12 mb-3 opacity-40" />
               <p className="text-sm text-center">Open a PDF file to see {sidebarTab}</p>

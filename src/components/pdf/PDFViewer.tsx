@@ -13,7 +13,7 @@ import {
 
 export default function PDFViewer() {
   const {
-    document,
+    pdfFile,
     numPages,
     setNumPages,
     isLoading,
@@ -23,12 +23,11 @@ export default function PDFViewer() {
     currentPage,
     goToPage,
     viewMode,
-    setDocument,
+    setPdfFile,
     setDocumentName,
     setBookmarks,
     zoom,
     rotation,
-    annotations,
     activeTool,
     addTab,
   } = usePDFStore();
@@ -50,13 +49,13 @@ export default function PDFViewer() {
 
       setPdfDoc(pdf);
       setNumPages(pdf.numPages);
-      setDocument(file);
+      setPdfFile(file);
 
       // Add tab
       addTab({
         id: `tab-${Date.now()}`,
         name: file.name,
-        document: file,
+        pdfFile: file,
       });
 
       // Extract bookmarks
@@ -99,7 +98,7 @@ export default function PDFViewer() {
     } finally {
       setIsLoading(false);
     }
-  }, [setDocument, setDocumentName, setNumPages, setIsLoading, setError, setBookmarks, addTab]);
+  }, [setPdfFile, setDocumentName, setNumPages, setIsLoading, setError, setBookmarks, addTab]);
 
   // Load PDF from URL
   const loadDocumentFromUrl = useCallback(async (url: string, name: string) => {
@@ -118,13 +117,13 @@ export default function PDFViewer() {
       const response = await fetch(url);
       const blob = await response.blob();
       const file = new File([blob], name, { type: 'application/pdf' });
-      setDocument(file);
+      setPdfFile(file);
 
       // Add tab
       addTab({
         id: `tab-${Date.now()}`,
         name: name,
-        document: file,
+        pdfFile: file,
       });
 
       // Extract bookmarks
@@ -167,7 +166,7 @@ export default function PDFViewer() {
     } finally {
       setIsLoading(false);
     }
-  }, [setDocument, setDocumentName, setNumPages, setIsLoading, setError, setBookmarks, addTab]);
+  }, [setPdfFile, setDocumentName, setNumPages, setIsLoading, setError, setBookmarks, addTab]);
 
   // Auto-load sample PDF on mount
   useEffect(() => {
@@ -249,7 +248,7 @@ export default function PDFViewer() {
             break;
           case 'o':
             e.preventDefault();
-            const input = document.createElement('input');
+            const input = globalThis.document.createElement('input');
             input.type = 'file';
             input.accept = '.pdf';
             input.onchange = (ev) => {
@@ -277,8 +276,20 @@ export default function PDFViewer() {
 
   const cursorClass = activeTool === 'hand' ? 'cursor-grab' : activeTool === 'draw' ? 'cursor-crosshair' : activeTool !== 'select' ? 'cursor-crosshair' : '';
 
-  // Empty state - no document
-  if (!document && !isLoading) {
+  // Helper to open file picker
+  const openFilePicker = useCallback(() => {
+    const input = globalThis.document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) loadDocument(file);
+    };
+    input.click();
+  }, [loadDocument]);
+
+  // Empty state - no pdfFile
+  if (!pdfFile && !isLoading) {
     return (
       <div
         ref={containerRef}
@@ -313,16 +324,7 @@ export default function PDFViewer() {
                 </p>
               </div>
               <button
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.pdf';
-                  input.onchange = (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) loadDocument(file);
-                  };
-                  input.click();
-                }}
+                onClick={openFilePicker}
                 className="px-6 py-2.5 bg-[#e8720c] hover:bg-[#d4680a] text-white text-sm font-medium rounded-lg transition-colors cursor-pointer shadow-lg shadow-[#e8720c]/20"
               >
                 Open PDF File
@@ -361,14 +363,7 @@ export default function PDFViewer() {
           <button
             onClick={() => {
               setError(null);
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.pdf';
-              input.onchange = (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file) loadDocument(file);
-              };
-              input.click();
+              openFilePicker();
             }}
             className="px-5 py-2 bg-[#e8720c] hover:bg-[#d4680a] text-white text-sm rounded-lg transition-colors cursor-pointer"
           >

@@ -22,7 +22,7 @@ export default function SearchBar() {
     setSearchResults,
     currentSearchIndex,
     setCurrentSearchIndex,
-    document,
+    pdfFile,
     goToPage,
   } = usePDFStore();
 
@@ -38,12 +38,12 @@ export default function SearchBar() {
   }, [isSearchVisible]);
 
   const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim() || !document) return;
+    if (!searchQuery.trim() || !pdfFile) return;
 
     setIsSearching(true);
     try {
       initPDFWorker();
-      const arrayBuffer = await document.arrayBuffer();
+      const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const results: number[] = [];
 
@@ -75,7 +75,7 @@ export default function SearchBar() {
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, document, caseSensitive, wholeWords, setSearchResults, setCurrentSearchIndex, goToPage]);
+  }, [searchQuery, pdfFile, caseSensitive, wholeWords, setSearchResults, setCurrentSearchIndex, goToPage]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

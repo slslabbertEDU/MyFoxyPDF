@@ -5,17 +5,17 @@ import { usePDFStore } from './PDFStore';
 import { pdfjsLib, initPDFWorker } from './PDFWorker';
 
 export default function ThumbnailPanel() {
-  const { numPages, currentPage, goToPage, document, zoom } = usePDFStore();
+  const { numPages, currentPage, goToPage, pdfFile, zoom } = usePDFStore();
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
 
   const renderThumbnail = useCallback(
     async (pageNum: number, canvas: HTMLCanvasElement) => {
-      if (!document) return;
+      if (!pdfFile) return;
 
       try {
         initPDFWorker();
-        const arrayBuffer = await document.arrayBuffer();
+        const arrayBuffer = await pdfFile.arrayBuffer();
         const pdf = pdfDocRef.current || (await pdfjsLib.getDocument({ data: arrayBuffer }).promise);
         pdfDocRef.current = pdf;
 
@@ -36,22 +36,22 @@ export default function ThumbnailPanel() {
         console.error('Thumbnail render error:', err);
       }
     },
-    [document]
+    [pdfFile]
   );
 
   useEffect(() => {
     return () => {
       pdfDocRef.current = null;
     };
-  }, [document]);
+  }, [pdfFile]);
 
   useEffect(() => {
-    if (!document) return;
+    if (!pdfFile) return;
 
     const renderAll = async () => {
       initPDFWorker();
       try {
-        const arrayBuffer = await document.arrayBuffer();
+        const arrayBuffer = await pdfFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         pdfDocRef.current = pdf;
 
@@ -67,7 +67,7 @@ export default function ThumbnailPanel() {
     };
 
     renderAll();
-  }, [document, numPages, renderThumbnail]);
+  }, [pdfFile, numPages, renderThumbnail]);
 
   return (
     <div className="p-2 space-y-2">

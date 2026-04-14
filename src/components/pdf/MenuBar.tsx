@@ -63,7 +63,7 @@ export default function MenuBar() {
   } = usePDFStore();
 
   const handleOpenFile = useCallback(() => {
-    const input = document.createElement('input');
+    const input = globalThis.document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf';
     input.onchange = (e) => {
@@ -83,7 +83,7 @@ export default function MenuBar() {
   const toggleTheme = useCallback(() => {
     const newMode = themeMode === 'light' ? 'dark' : 'light';
     setThemeMode(newMode);
-    document.documentElement.classList.toggle('dark', newMode === 'dark');
+    globalThis.document.documentElement.classList.toggle('dark', newMode === 'dark');
   }, [themeMode, setThemeMode]);
 
   return (

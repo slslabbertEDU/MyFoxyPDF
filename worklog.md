@@ -26,3 +26,22 @@ Stage Summary:
 - Features: PDF viewing/rendering, page thumbnails, bookmarks, search, annotations (highlight, underline, strikethrough, text notes, freehand drawing, stamps), zoom controls, page navigation, rotation, view modes, tab management, drag-and-drop file open, keyboard shortcuts
 - All components properly separated into individual files under 300 lines
 - No lint errors, application compiles and serves on port 3000
+
+---
+Task ID: fix-1
+Agent: Main Agent
+Task: Fix runtime TypeError - Cannot read properties of null (reading 'createElement')
+
+Work Log:
+- Identified root cause: Zustand store's `document` property (File | null) shadowed the browser's global `document` object
+- When no PDF was loaded, `document` from store was `null`, causing `document.createElement('input')` to fail
+- Renamed store property from `document` to `pdfFile` across all files
+- Updated all references in: PDFStore.ts, PDFViewer.tsx, Toolbar.tsx, MenuBar.tsx, TabBar.tsx, Sidebar.tsx, RightPanel.tsx, SearchBar.tsx, ThumbnailPanel.tsx, StatusBar.tsx
+- Changed all remaining browser `document` API calls to use `globalThis.document` for safety
+- Verified no lint errors after changes
+- Verified dev server compiles and serves correctly
+
+Stage Summary:
+- Fixed the shadowing bug by renaming `document` → `pdfFile` in the store and all consumers
+- Used `globalThis.document` for browser DOM API calls to prevent future confusion
+- All 10+ files updated, zero lint errors, app running successfully

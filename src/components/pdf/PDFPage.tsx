@@ -187,7 +187,7 @@ export default function PDFPage({ pageNumber, pdfDoc }: PDFPageProps) {
           if (!item.str || !item.transform) return;
           const tx = item.transform;
           const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
-          const span = document.createElement('span');
+          const span = globalThis.document.createElement('span');
           span.textContent = item.str;
           span.style.position = 'absolute';
           span.style.left = `${tx[4]}px`;

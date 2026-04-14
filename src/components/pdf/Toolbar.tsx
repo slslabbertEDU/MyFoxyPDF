@@ -64,7 +64,7 @@ export default function Toolbar() {
     activeTool,
     setActiveTool,
     setIsSearchVisible,
-    document,
+    pdfFile,
   } = usePDFStore();
 
   const handlePageInput = useCallback(
@@ -139,7 +139,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={() => {
-                  const input = document.createElement('input');
+                  const input = globalThis.document.createElement('input');
                   input.type = 'file';
                   input.accept = '.pdf';
                   input.onchange = (e) => {
@@ -187,7 +187,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={prevPage}
-                disabled={currentPage <= 1 || !document}
+                disabled={currentPage <= 1 || !pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5 text-[#d4d4d4] rotate-0" style={{ transform: 'scaleX(-1)' }} />
@@ -216,7 +216,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={nextPage}
-                disabled={currentPage >= numPages || !document}
+                disabled={currentPage >= numPages || !pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <RotateCw className="h-3.5 w-3.5 text-[#d4d4d4]" style={{ transform: 'scaleX(-1)' }} />
@@ -234,7 +234,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={zoomOut}
-                disabled={!document}
+                disabled={!pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ZoomOut className="h-4 w-4 text-[#d4d4d4]" />
@@ -264,7 +264,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={zoomIn}
-                disabled={!document}
+                disabled={!pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ZoomIn className="h-4 w-4 text-[#d4d4d4]" />
@@ -282,7 +282,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={rotateCounterClockwise}
-                disabled={!document}
+                disabled={!pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <RotateCcw className="h-4 w-4 text-[#d4d4d4]" />
@@ -294,7 +294,7 @@ export default function Toolbar() {
             <TooltipTrigger asChild>
               <button
                 onClick={rotateClockwise}
-                disabled={!document}
+                disabled={!pdfFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <RotateCw className="h-4 w-4 text-[#d4d4d4]" />
