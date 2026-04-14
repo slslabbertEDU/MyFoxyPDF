@@ -45,3 +45,26 @@ Stage Summary:
 - Fixed the shadowing bug by renaming `document` → `pdfFile` in the store and all consumers
 - Used `globalThis.document` for browser DOM API calls to prevent future confusion
 - All 10+ files updated, zero lint errors, app running successfully
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix SSR runtime TypeError - document.createElement is null
+
+Work Log:
+- Diagnosed the root cause: `document.createElement('input')` and `globalThis.document` calls in onClick handlers fail during SSR in Next.js 16
+- Fixed PDFViewer.tsx: Replaced `document.createElement('input')` with a ref-based hidden `<input type="file">` element using `useRef<HTMLInputElement>` and `fileInputRef.current?.click()`
+- Fixed MenuBar.tsx: Same ref-based approach for file open from File menu
+- Fixed Toolbar.tsx: Same ref-based approach for file open from toolbar button
+- Fixed TabBar.tsx: Same ref-based approach for file open from new tab button
+- Fixed PDFPage.tsx: Replaced `globalThis.document.createElement` with `document.createElement` (safe in useEffect context)
+- Fixed MenuBar.tsx: Added SSR guard for `document.documentElement.classList.toggle`
+- Verified no remaining `globalThis.document` calls in source
+- Built project successfully with `next build` - no compilation errors
+- Dev server running on port 3000 with HTTP 200
+
+Stage Summary:
+- All SSR-related document API calls replaced with React-friendly patterns
+- File input now uses proper ref-based approach across all components
+- App compiles and runs without errors
+- Build output: ✓ Compiled successfully, all routes generated

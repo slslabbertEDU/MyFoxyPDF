@@ -34,6 +34,7 @@ export default function PDFViewer() {
 
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Load PDF document
@@ -248,14 +249,7 @@ export default function PDFViewer() {
             break;
           case 'o':
             e.preventDefault();
-            const input = globalThis.document.createElement('input');
-            input.type = 'file';
-            input.accept = '.pdf';
-            input.onchange = (ev) => {
-              const file = (ev.target as HTMLInputElement).files?.[0];
-              if (file) loadDocument(file);
-            };
-            input.click();
+            fileInputRef.current?.click();
             break;
           case '=':
           case '+':
@@ -278,15 +272,24 @@ export default function PDFViewer() {
 
   // Helper to open file picker
   const openFilePicker = useCallback(() => {
-    const input = globalThis.document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) loadDocument(file);
-    };
-    input.click();
-  }, [loadDocument]);
+    fileInputRef.current?.click();
+  }, []);
+
+  // Hidden file input for opening PDFs
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept=".pdf"
+      className="hidden"
+      onChange={(e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) loadDocument(file);
+        // Reset so the same file can be re-opened
+        e.target.value = '';
+      }}
+    />
+  );
 
   // Empty state - no pdfFile
   if (!pdfFile && !isLoading) {
@@ -300,6 +303,7 @@ export default function PDFViewer() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {fileInput}
         <div className="flex flex-col items-center gap-6 text-center px-8">
           {isDragging ? (
             <>
@@ -340,6 +344,7 @@ export default function PDFViewer() {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#1e1e1e]">
+        {fileInput}
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-14 h-14 border-3 border-[#333] rounded-full" />
@@ -355,6 +360,7 @@ export default function PDFViewer() {
   if (error) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#1e1e1e]">
+        {fileInput}
         <div className="flex flex-col items-center gap-4 text-center px-8">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
             <AlertCircle className="h-8 w-8 text-red-400" />
@@ -386,6 +392,7 @@ export default function PDFViewer() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {fileInput}
       <div className="flex flex-col items-center py-4">
         {pagesToRender.map((pageNum) => (
           <div

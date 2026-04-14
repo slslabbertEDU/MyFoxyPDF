@@ -1,28 +1,34 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { X, FileText, Plus } from 'lucide-react';
 import { usePDFStore } from './PDFStore';
 
 export default function TabBar() {
   const { tabs, activeTabId, setActiveTab, removeTab, pdfFile } = usePDFStore();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleOpenFile = useCallback(() => {
-    const input = globalThis.document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const event = new CustomEvent('pdf-file-open', { detail: file });
-        window.dispatchEvent(event);
-      }
-    };
-    input.click();
+    fileInputRef.current?.click();
   }, []);
 
   return (
     <div className="flex items-center h-8 bg-[#252525] border-b border-[#1a1a1a] select-none overflow-x-auto">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            const event = new CustomEvent('pdf-file-open', { detail: file });
+            window.dispatchEvent(event);
+          }
+          e.target.value = '';
+        }}
+      />
       {/* Foxit logo / brand */}
       <div className="flex items-center gap-1.5 px-3 border-r border-[#1a1a1a] shrink-0">
         <div className="w-4 h-4 bg-[#e8720c] rounded-sm flex items-center justify-center">

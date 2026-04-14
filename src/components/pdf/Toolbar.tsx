@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -43,6 +43,12 @@ import {
 } from '@/components/ui/select';
 
 export default function Toolbar() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenFile = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   const {
     zoom,
     zoomIn,
@@ -112,6 +118,20 @@ export default function Toolbar() {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center h-11 bg-[#2d2d2d] border-b border-[#1a1a1a] px-2 gap-0.5 select-none overflow-x-auto">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={(e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+              const event = new CustomEvent('pdf-file-open', { detail: file });
+              window.dispatchEvent(event);
+            }
+            e.target.value = '';
+          }}
+        />
         {/* Left section: Toggle panels */}
         <div className="flex items-center gap-0.5 mr-1 shrink-0">
           <Tooltip>
@@ -138,19 +158,7 @@ export default function Toolbar() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => {
-                  const input = globalThis.document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.pdf';
-                  input.onchange = (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) {
-                      const event = new CustomEvent('pdf-file-open', { detail: file });
-                      window.dispatchEvent(event);
-                    }
-                  };
-                  input.click();
-                }}
+                onClick={handleOpenFile}
                 className="p-1.5 rounded hover:bg-[#4a4a4a] cursor-pointer"
               >
                 <FolderOpen className="h-4 w-4 text-[#d4d4d4]" />

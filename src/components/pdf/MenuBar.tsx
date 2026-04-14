@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   Download,
   Printer,
@@ -62,18 +62,10 @@ export default function MenuBar() {
     setActiveTool,
   } = usePDFStore();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleOpenFile = useCallback(() => {
-    const input = globalThis.document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const event = new CustomEvent('pdf-file-open', { detail: file });
-        window.dispatchEvent(event);
-      }
-    };
-    input.click();
+    fileInputRef.current?.click();
   }, []);
 
   const handlePrint = useCallback(() => {
@@ -83,11 +75,27 @@ export default function MenuBar() {
   const toggleTheme = useCallback(() => {
     const newMode = themeMode === 'light' ? 'dark' : 'light';
     setThemeMode(newMode);
-    globalThis.document.documentElement.classList.toggle('dark', newMode === 'dark');
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', newMode === 'dark');
+    }
   }, [themeMode, setThemeMode]);
 
   return (
     <div className="flex items-center h-7 bg-[#3c3c3c] border-b border-[#2a2a2a] px-1 text-[12px] text-[#d4d4d4] select-none">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            const event = new CustomEvent('pdf-file-open', { detail: file });
+            window.dispatchEvent(event);
+          }
+          e.target.value = '';
+        }}
+      />
       <DropdownMenu>
         <DropdownMenuTrigger className="px-2.5 py-0.5 hover:bg-[#4a4a4a] rounded-sm outline-none cursor-pointer">
           File
