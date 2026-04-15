@@ -1,16 +1,17 @@
-from pyhanko.sign import signers
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
+from pyhanko.sign import signers
+
 
 def create_self_signed_cert(cert_path, key_path):
-    from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.primitives import serialization, hashes
-    from cryptography.x509 import NameOID
     from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509 import NameOID
     import datetime
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, u"MyFoxyPDF Test"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "MyFoxyPDF Test"),
     ])
     cert = x509.CertificateBuilder().subject_name(
         subject
@@ -26,23 +27,42 @@ def create_self_signed_cert(cert_path, key_path):
         datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=10)
     ).sign(key, hashes.SHA256())
 
-    with open(cert_path, "wb") as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))
-    with open(key_path, "wb") as f:
-        f.write(key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        ))
+    with open(cert_path, "wb") as cert_file:
+        cert_file.write(cert.public_bytes(serialization.Encoding.PEM))
+    with open(key_path, "wb") as key_file:
+        key_file.write(
+            key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
 
 def sign_pdf(input_pdf, output_pdf, cert_pem, key_pem):
     signer = signers.SimpleSigner.load(key_pem, cert_pem)
 
-    with open(input_pdf, 'rb') as doc_file:
-        w = IncrementalPdfFileWriter(doc_file)
-        with open(output_pdf, 'wb') as out_file:
+    with open(input_pdf, "rb") as doc_file:
+        writer = IncrementalPdfFileWriter(doc_file)
+        with open(output_pdf, "wb") as out_file:
             signers.sign_pdf(
-                w, signers.PdfSignatureMetadata(field_name='Signature1'),
+                writer,
+                signers.PdfSignatureMetadata(field_name="Signature1"),
                 signer=signer,
+                output=out_file,
             )
-            w.write(out_file)
+
+
+def validate_pdf(filepath):
+    import fitz
+
+    doc = fitz.open(filepath)
+    try:
+        for page in doc:
+            widgets = list(page.widgets() or [])
+            for widget in widgets:
+                if widget.field_type == fitz.PDF_WIDGET_TYPE_SIGNATURE:
+                    return "Signature field found. Cryptographic validation is not implemented in this MVP."
+        return "No signature fields found in this document."
+    finally:
+        doc.close()
