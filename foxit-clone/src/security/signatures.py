@@ -44,25 +44,27 @@ def sign_pdf(input_pdf, output_pdf, cert_pem, key_pem):
 
     with open(input_pdf, "rb") as doc_file:
         writer = IncrementalPdfFileWriter(doc_file)
-        with open(output_pdf, "wb") as out_file:
-            signers.sign_pdf(
-                writer,
-                signers.PdfSignatureMetadata(field_name="Signature1"),
-                signer=signer,
-                output=out_file,
-            )
+        signed_bytes = signers.sign_pdf(
+            writer,
+            signers.PdfSignatureMetadata(field_name="Signature1"),
+            signer=signer,
+        )
+
+    with open(output_pdf, "wb") as out_file:
+        out_file.write(signed_bytes.getbuffer())
 
 
-def validate_pdf(filepath):
-    import fitz
-
-    doc = fitz.open(filepath)
+def validate_pdf(pdf_path):
     try:
+        import fitz
+
+        doc = fitz.open(pdf_path)
         for page in doc:
-            widgets = list(page.widgets() or [])
-            for widget in widgets:
+            for widget in page.widgets() or []:
                 if widget.field_type == fitz.PDF_WIDGET_TYPE_SIGNATURE:
-                    return "Signature field found. Cryptographic validation is not implemented in this MVP."
-        return "No signature fields found in this document."
-    finally:
+                    doc.close()
+                    return "Signature field detected in document."
         doc.close()
+        return "No signature field found in document."
+    except Exception as exc:
+        return f"Validation failed: {exc}"
