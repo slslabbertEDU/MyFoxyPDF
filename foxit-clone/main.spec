@@ -1,13 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from pathlib import Path
+
 block_cipher = None
+project_root = Path.cwd()
+
 
 a = Analysis(
     ['src/main.py'],
-    pathex=[],
+    pathex=[str(project_root), str(project_root / 'src')],
     binaries=[],
-    datas=[],
-    hiddenimports=['pyqtribbon', 'pymupdf', 'pyhanko', 'cryptography', 'Pillow'],
+    datas=[
+        ('README.md', '.'),
+    ],
+    hiddenimports=[
+        'pyqtribbon',
+        'fitz',
+        'pymupdf',
+        'pyhanko',
+        'cryptography',
+        'PIL',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

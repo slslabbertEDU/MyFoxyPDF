@@ -166,6 +166,13 @@ def _install_pyside6_stubs():
         def exec(self):
             return 0
 
+    class _StatusBar:
+        def __init__(self):
+            self.messages = []
+
+        def showMessage(self, message):
+            self.messages.append(message)
+
     class QMainWindow(QWidget):
         def __init__(self):
             super().__init__()
@@ -173,6 +180,7 @@ def _install_pyside6_stubs():
             self.size = (0, 0)
             self.menu_widget = None
             self.central_widget = None
+            self._status_bar = _StatusBar()
 
         def setWindowTitle(self, title):
             self.title = title
@@ -185,6 +193,9 @@ def _install_pyside6_stubs():
 
         def setCentralWidget(self, widget):
             self.central_widget = widget
+
+        def statusBar(self):
+            return self._status_bar
 
         def show(self):
             return None
@@ -480,10 +491,53 @@ def _install_pyside6_stubs():
     pyside6.QtGui = qtgui
     pyside6.QtWidgets = qtwidgets
 
+    class _RibbonButton:
+        def __init__(self, text=""):
+            self.text = text
+            self.clicked = BoundSignal()
+
+    class _RibbonPanel:
+        def __init__(self, name):
+            self.name = name
+            self.buttons = []
+
+        def addLargeButton(self, text):
+            button = _RibbonButton(text)
+            self.buttons.append(button)
+            return button
+
+        def addMediumButton(self, text):
+            button = _RibbonButton(text)
+            self.buttons.append(button)
+            return button
+
+    class _RibbonCategory:
+        def __init__(self, name):
+            self.name = name
+            self.panels = []
+
+        def addPanel(self, name):
+            panel = _RibbonPanel(name)
+            self.panels.append(panel)
+            return panel
+
+    class RibbonBar:
+        def __init__(self):
+            self.categories = []
+
+        def addCategory(self, name):
+            category = _RibbonCategory(name)
+            self.categories.append(category)
+            return category
+
+    pyqtribbon = types.ModuleType("pyqtribbon")
+    pyqtribbon.RibbonBar = RibbonBar
+
     sys.modules["PySide6"] = pyside6
     sys.modules["PySide6.QtCore"] = qtcore
     sys.modules["PySide6.QtGui"] = qtgui
     sys.modules["PySide6.QtWidgets"] = qtwidgets
+    sys.modules["pyqtribbon"] = pyqtribbon
 
 
 try:
