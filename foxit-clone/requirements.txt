@@ -1,0 +1,7 @@
+PySide6
+PyMuPDF
+pyqtribbon
+pyhanko
+cryptography
+Pillow
+pytest
