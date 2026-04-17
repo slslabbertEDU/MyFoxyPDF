@@ -5,6 +5,7 @@ from PySide6.QtGui import QPixmap
 class PDFView(QGraphicsView):
     zoom_requested = Signal(float)
     click_requested = Signal(float, float) # UI x, y
+    rubberband_selected = Signal(float, float, float, float) # x, y, w, h
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -54,7 +55,25 @@ class PDFView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.MiddleButton:
             self.setDragMode(QGraphicsView.DragMode.NoDrag)
+
+        # Capture rubber band geometry before super() clears it
+        is_rubber_band = self.dragMode() == QGraphicsView.DragMode.RubberBandDrag
+        rect = self.rubberBandRect()
+        valid_rect = is_rubber_band and rect.isValid() and not rect.isEmpty()
+
+        if valid_rect:
+            top_left = self.mapToScene(rect.topLeft())
+            bottom_right = self.mapToScene(rect.bottomRight())
+
         super().mouseReleaseEvent(event)
+
+        if valid_rect:
+            self.rubberband_selected.emit(
+                top_left.x(),
+                top_left.y(),
+                bottom_right.x() - top_left.x(),
+                bottom_right.y() - top_left.y()
+            )
 
     def map_ui_to_pdf(self, ui_x, ui_y, page_matrix):
         """
